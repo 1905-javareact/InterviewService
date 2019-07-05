@@ -1,13 +1,16 @@
 package com.revature.controllers;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Arrays;
 
 import javax.validation.Valid;
 
+import org.hibernate.annotations.Where;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,6 +33,7 @@ import com.revature.dtos.InterviewAssociateJobData;
 import com.revature.models.Interview;
 import com.revature.models.InterviewFeedback;
 import com.revature.models.InterviewFormat;
+import com.revature.models.StatusHistory;
 import com.revature.models.FeedbackStatus;
 import com.revature.models.AssociateInput;
 import com.revature.services.AssociateInputService;
@@ -41,6 +46,7 @@ import com.revature.dtos.NewAssociateInput;
 import com.revature.models.Interview;
 import com.revature.services.AssociateInputService;
 import com.revature.services.InterviewService;
+import com.revature.services.InterviewSpecifications;
 
 @RestController
 @RequestMapping("interview")
@@ -51,9 +57,28 @@ public class InterviewController {
 	@Autowired
 	private AssociateInputService associateInputService;
 	
+	@Autowired
+	private IUserClient iUserClient;
+	
 	@GetMapping
 	public List<Interview> findAll() {
 		return interviewService.findAll();
+	}
+	
+//	@GetMapping("{id}")
+//	public User findById(@PathVariable("id") int id) {
+//		
+//	}
+	
+//	@GetMapping("/user/{email}")
+//	public List<StatusHistory> findByUserEmail(@PathVariable String email){
+//		return iUserClient.findByUserEmail(email);
+//	}
+	
+	@GetMapping(path = "email/{id}")
+	public User findByEmail(@PathVariable int id){
+		
+		return iUserClient.findById(id);
 	}
 	
 	@GetMapping("/pages")
@@ -67,6 +92,7 @@ public class InterviewController {
 		// The above url will return the 0th page of size 3.
 		Sort sorter = new Sort(Sort.Direction.valueOf(direction), orderBy);
         Pageable pageParameters = PageRequest.of(pageNumber, pageSize, sorter);
+        System.out.println("i am in here");
         
         return interviewService.findAllByAssociateEmail(email, pageParameters);
     }
@@ -76,13 +102,69 @@ public class InterviewController {
             @RequestParam(name="orderBy", defaultValue="id") String orderBy,
             @RequestParam(name="direction", defaultValue="ASC") String direction,
             @RequestParam(name="pageNumber", defaultValue="0") Integer pageNumber,
-            @RequestParam(name="pageSize", defaultValue="5") Integer pageSize) {
+            @RequestParam(name="pageSize", defaultValue="5") Integer pageSize,
+            @RequestParam(name="associateEmail", defaultValue="associateEmail") String associateEmail,
+            @RequestParam(name="managerEmail", defaultValue="managerEmail") String managerEmail,
+            @RequestParam(name="place", defaultValue="placeName") String place,
+            @RequestParam(name="clientName", defaultValue="clientName") String clientName,
+            @RequestParam(name="staging", defaultValue="staging") String staging) {
 		// Example url call: ~:8091/interview/page?pageNumber=0&pageSize=3
 		// The above url will return the 0th page of size 3.
-		Sort sorter = new Sort(Sort.Direction.valueOf(direction), orderBy);
-        Pageable pageParameters = PageRequest.of(pageNumber, pageSize, sorter);
+		System.out.println(associateEmail + ' ' + managerEmail + ' ' + place + ' ' + clientName);
+		
+		String associateEmailInput;
+		if(associateEmail.equals("associateEmail")) {
+			associateEmailInput = "%";
+		} else {
+			associateEmailInput = associateEmail;
+		}
+		System.out.println(associateEmailInput);
+        	
+		String managerEmailInput;
+		if(managerEmail.equals("managerEmail")) {
+			managerEmailInput = "%";
+		} else {
+			managerEmailInput = managerEmail;
+		}
+		System.out.println(managerEmailInput);
+		
+		String placeInput;
+		if(place.equals("placeName")) {
+			placeInput = "%";
+		} else {
+			placeInput = place;
+		}
+		System.out.println(placeInput);
+		
+		String clientNameInput;
+		if(clientName.equals("clientName")) {
+			clientNameInput = "%";
+		} else {
+			clientNameInput = clientName;
+		}
+		System.out.println(clientNameInput);
         
-        return interviewService.findAll(pageParameters);
+        //System.out.println(associateEmail + ' ' + managerEmail + ' ' + place);
+        
+//        if(client == "clientName")
+//        	client = "%";
+		Sort sorter = new Sort(Sort.Direction.valueOf(direction), orderBy);
+        Pageable pageParameters = PageRequest.of(pageNumber, pageSize, sorter);        
+        
+//        if(!staging.equals("staging")) {
+//			return interviewService.getInterviewsStaging(Specification.where(InterviewSpecifications.hasAssociateEmail(associateEmailInput))
+//					.and(InterviewSpecifications.hasManagerEmail(managerEmailInput))
+//					.and(InterviewSpecifications.hasPlace(placeInput))
+//					.and(InterviewSpecifications.hasClient(clientNameInput)), pageParameters);
+//		}
+        
+        Page<Interview> pageAssoc = interviewService.findAll(Specification.where(InterviewSpecifications.hasAssociateEmail(associateEmailInput))
+        											.and(InterviewSpecifications.hasManagerEmail(managerEmailInput))
+        											.and(InterviewSpecifications.hasPlace(placeInput))
+        											.and(InterviewSpecifications.hasClient(clientNameInput)), pageParameters);
+        System.out.println(pageAssoc);
+        return pageAssoc;
+        //return interviewService.findAll(pageParameters);
     }
 	
 	//returns 2 numbers in a list
@@ -191,7 +273,7 @@ public class InterviewController {
     }
 
 	@GetMapping("reports/AssociateNeedFeedback")
-	public List<User> getAssociateNeedFeedback() {
+	public List<com.revature.feign.User> getAssociateNeedFeedback() {
         return interviewService.getAssociateNeedFeedback();
     }
 	

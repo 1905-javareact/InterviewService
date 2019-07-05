@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.revature.cognito.annotations.CognitoAuth;
 import com.revature.cognito.constants.CognitoRoles;
+import com.revature.models.StatusHistory;
 import com.revature.models.User;
 
 @FeignClient(name="user-service")
@@ -20,11 +21,14 @@ public interface IUserClient {
 	@GetMapping
 	String findAll();
 
-	@GetMapping("{id}")
-	public User findById(@PathVariable("id") int id);
+	@GetMapping("users/{id}")
+	public User findById(@PathVariable int id);
 
-	@GetMapping(path = "email/{email}")
-	public ResponseEntity<User> findByEmail(@PathVariable("email") String email);
+	@GetMapping(path = "users/email/{email}")
+	public ResponseEntity<com.revature.feign.User> findByEmail(@PathVariable("email") String email);
+	
+//	@GetMapping("user/{email}")
+//	public List<StatusHistory> findByUserEmail(@PathVariable String email);
 
 	@CognitoAuth(roles = { CognitoRoles.STAGING_MANAGER, CognitoRoles.TRAINER })
 	@GetMapping("cohorts/{id}")

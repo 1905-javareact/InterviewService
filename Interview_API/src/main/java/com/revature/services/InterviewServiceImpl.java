@@ -4,16 +4,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +35,7 @@ import com.revature.models.FeedbackStatus;
 import com.revature.models.Interview;
 import com.revature.models.InterviewFeedback;
 import com.revature.models.InterviewFormat;
+import com.revature.models.StatusHistory;
 import com.revature.models.User;
 import com.revature.repos.AssociateInputRepo;
 import com.revature.repos.ClientRepo;
@@ -91,8 +95,48 @@ public class InterviewServiceImpl implements InterviewService {
 			return interviewRepo.findByAssociateEmail(email);
 		}
 	}
+	
+	@Override
+	public Page<Interview> findAll(Specification<Interview> spec, Pageable pageable) {
+		// TODO Auto-generated method stub
+		return interviewRepo.findAll(spec, pageable);
+	}
 
-
+	@Override
+	public Page<Interview> getInterviewsStaging(Specification<Interview> spec, Pageable pageable) {
+		// TODO Auto-generated method stub
+		List<Interview> stagingInterviews = interviewRepo.findAll().stream().filter((item) -> {
+        	
+        	String assocEmail = item.getAssociateEmail();
+        	com.revature.feign.User user = userClient.findByEmail(assocEmail).getBody();
+        	
+        	System.out.println(user);
+        	
+        	if(user != null) {
+        		//StatusHistory statusLatestDate = statusHistory.stream().max(Comparator.comparing(StatusHistory::getStatusStart)).get();
+        		
+        		//statusHistory.stream().map((statusItem) -> {
+        			if (user.getUserStatus().getSpecificStatus() == "staging") {
+        				
+        				return true;
+        				//return statusItem;
+        			}
+        		//});
+        	}
+        	
+        	return false;
+        }).collect(Collectors.toList());
+		
+		PageImpl interviewsPage = ListToPage.getPage(stagingInterviews, pageable);
+		return interviewsPage;
+		//return stagingInterviews;
+	}
+	
+//	@Override
+//	public Page<Interview> getInterviewsStaging(Specification<Interview> spec, Pageable pageable) {
+//		return interviewRepo.getInterviewsStaging(spec, pageable);
+//	}
+	
 	public Interview addNewInterview(NewInterviewData i) {
 		try {
 			String managerEmail = cognitoUtil.getRequesterClaims().getEmail();
@@ -143,7 +187,7 @@ public class InterviewServiceImpl implements InterviewService {
 		System.out.println("List created");
 		for(AssociateInterview A: associates) {
 			try{
-				User U = userClient.findByEmail(A.getAssociateEmail()).getBody();
+				com.revature.feign.User U = userClient.findByEmail(A.getAssociateEmail()).getBody();
 				String Name = U.getFirstName();
 				if(Name=="") {
 					Name=U.getLastName();
@@ -228,10 +272,10 @@ public class InterviewServiceImpl implements InterviewService {
   }
   
 	@Override
-	public List<User> getAssociateNeedFeedback() {
+	public List<com.revature.feign.User> getAssociateNeedFeedback() {
 		List<Interview> interviews = interviewRepo.findAll();
 		Set<String> needFeedback = new TreeSet<String>();
-		List<User> associates = new ArrayList<User>();
+		List<com.revature.feign.User> associates = new ArrayList<com.revature.feign.User>();
 		
 		for(Interview I: interviews) {
 			if(I.getFeedback() != null && I.getFeedback().getFeedbackDelivered() == null) {
@@ -404,7 +448,7 @@ public class InterviewServiceImpl implements InterviewService {
 		
 		for(Interview24Hour I: Data) {
 			try {
-				User U = userClient.findByEmail(I.getAssocEmail()).getBody();
+				com.revature.feign.User U = userClient.findByEmail(I.getAssocEmail()).getBody();
 				System.out.println(U);
 				I.setAssocName(U.getFirstName()+" "+U.getLastName());
 			} catch (Exception E){
@@ -435,7 +479,7 @@ public class InterviewServiceImpl implements InterviewService {
 		
 		for(InterviewAssociateJobData I: Data) {
 			try {
-				User U = userClient.findByEmail(I.getAssocEmail()).getBody();
+				com.revature.feign.User U = userClient.findByEmail(I.getAssocEmail()).getBody();
 				System.out.println(U);
 				I.setAssocName(U.getFirstName()+" "+U.getLastName());
 			} catch (Exception E){

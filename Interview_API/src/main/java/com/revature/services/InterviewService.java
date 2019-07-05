@@ -11,6 +11,8 @@ import com.revature.models.Interview;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+
 import com.revature.dtos.AssociateInterview;
 import com.revature.dtos.FeedbackData;
 import com.revature.dtos.Interview24Hour;
@@ -30,16 +32,19 @@ public interface InterviewService {
 	Interview findByManagerEmail(String s);
 	FeedbackStatus findStatusById(Integer id);
 	List<Interview> findAll();
+	//List<Interview> getInterviewsStaging();
+	Page<Interview> getInterviewsStaging(Specification<Interview> spec, Pageable pageable);
 	Interview addNewInterview(NewInterviewData i);
 	Interview addAssociateInput(NewAssociateInput a);
 	Page<Interview> findAll(Pageable page);
+	Page<Interview> findAll(Specification<Interview> spec, Pageable pageable);
 	Page<Interview> findAllByAssociateEmail(String email, Pageable page);
 	List<AssociateInterview> findInterviewsPerAssociate();
 	Page<AssociateInterview> findInterviewsPerAssociate(Pageable page);
 	List<Integer> getInterviewsWithin24HourNoticeAssociate();
 	List<Integer> getInterviewsWithin24HourNoticeManager();
 	Interview setFeedback(FeedbackData fm);
-	List<User> getAssociateNeedFeedback();
+	List<com.revature.feign.User> getAssociateNeedFeedback();
 	Page<User> getAssociateNeedFeedback(Pageable page);
 	List<Interview24Hour> getAll24HourNotice();
 	Page<Interview24Hour> getAll24HourNotice(Pageable page);
