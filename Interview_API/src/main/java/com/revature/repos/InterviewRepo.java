@@ -19,6 +19,6 @@ public interface InterviewRepo extends JpaRepository<Interview, Integer>, JpaSpe
 
 	List<Interview> findByFeedbackIsNotNullOrderByFeedbackFeedbackRequested();
 	
-	Page<Interview> findAll(Specification<Interview> spec, Pageable pageable);
+	//Page<Interview> findAll(Specification<Interview> spec, Pageable pageable);
 
 }

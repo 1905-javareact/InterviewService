@@ -34,7 +34,7 @@ public class StatusHistory {
 
 	@ManyToOne
 	@JoinColumn(name = "users_id")
-	private User user;
+	private com.revature.feign.User user;
 
 
 	@ManyToOne
@@ -61,11 +61,11 @@ public class StatusHistory {
 		this.statusStart = statusStart;
 	}
 
-	public User getUser() {
+	public com.revature.feign.User getUser() {
 		return user;
 	}
 
-	public void setUser(User user) {
+	public void setUser(com.revature.feign.User user) {
 		this.user = user;
 	}
 
@@ -90,7 +90,7 @@ public class StatusHistory {
 	}
 
 
-	public StatusHistory(int statusHistoryId, Timestamp statusStart, User user, Status status, Address address) {
+	public StatusHistory(int statusHistoryId, Timestamp statusStart, com.revature.feign.User user, Status status, Address address) {
 		super();
 		this.statusHistoryId = statusHistoryId;
 		this.statusStart = statusStart;

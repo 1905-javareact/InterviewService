@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -31,6 +32,7 @@ import com.revature.dtos.FeedbackData;
 import com.revature.dtos.FeedbackStat;
 import com.revature.dtos.Interview24Hour;
 import com.revature.dtos.InterviewAssociateJobData;
+import com.revature.dtos.InterviewStagingTime;
 import com.revature.dtos.NewAssociateInput;
 import com.revature.dtos.NewInterviewData;
 import com.revature.dtos.NumberOfInterviewsCount;
@@ -52,6 +54,8 @@ import com.revature.repos.InterviewFormatRepo;
 
 import com.revature.repos.InterviewRepo;
 import com.revature.utils.ListToPage;
+
+import net.bytebuddy.build.HashCodeAndEqualsPlugin.Sorted;
 
 @Service
 public class InterviewServiceImpl implements InterviewService {
@@ -142,31 +146,40 @@ public class InterviewServiceImpl implements InterviewService {
 	
 	@Override
 	public List<Interview> getInterviewsStaging() {
-		// TODO Auto-generated method stub
-		List<Interview> stagingInterviews = interviewRepo.findAll().stream().filter((item) -> {
+		// TODO Auto-generated method stub		
+		List<InterviewStagingTime> interviewStagingTimeAll = interviewRepo.findAll().stream().map((item) -> {
         	String assocEmail = item.getAssociateEmail();        	
-        	
-        	com.revature.feign.User user = null;
-    		try {
-    		//user = userClient.getUserByEmail(java.net.URLDecoder.decode(assocEmail.toLowerCase(), "utf-8"));
-    		user = userClient.getByEmail(assocEmail).getBody();
-    		} catch(Exception e) {
-    			e.printStackTrace();		
-    		}
-
-        	if(user != null) {
-        		System.out.println(user.getUserStatus().getSpecificStatus());
-        			if (user.getUserStatus().getSpecificStatus().equals("Staging")) {
-        				return true;
-        			}
-        	}
-        	return false;
+    		List<StatusHistory> userHistory = userClient.findByUserEmail(assocEmail).getBody();  
+    		if(userHistory == null) return null;
+    		
+    		StatusHistory userStatus = userHistory.stream().reduce((first, second) -> second).orElse(null);
+    		System.out.println(userStatus);
+    		if (userStatus == null) return null;
+        			if (userStatus.getUser().getUserStatus().getSpecificStatus().equals("Staging")) {
+        				
+        				InterviewStagingTime interviewStagingTimeItem = new InterviewStagingTime();
+        				interviewStagingTimeItem.setInterview(item);
+        				interviewStagingTimeItem.setStagingStart(userStatus.getStatusStart());
+        				interviewStagingTimeItem.setStagingStatus(userStatus.getUser().getUserStatus().getSpecificStatus());
+        				return interviewStagingTimeItem;
+        			} 
+        	return null;
         }).collect(Collectors.toList());
 		
-		return stagingInterviews;
+		List<InterviewStagingTime> interviewStagingTime = interviewStagingTimeAll.stream().filter(Objects::nonNull)
+															.collect(Collectors.toList());
+		
+		List<InterviewStagingTime> interviewStagingTimeSorted = interviewStagingTime.stream().sorted((i1, i2) -> 
+															i2.getStagingStart().compareTo(i1.getStagingStart()))
+															.collect(Collectors.toList());
+		
+		List<Interview> interviewByStagingTime = interviewStagingTimeSorted.stream().map((item) -> {					
+					Interview interviewitem = this.findById(item.getInterview().getId());				
+					return interviewitem;
+		}).collect(Collectors.toList());
 
-//		PageImpl interviewsPage = ListToPage.getPage(stagingInterviews, pageable);
-//		return interviewsPage;
+		return interviewByStagingTime;
+
 	}
 
 	public List<AssociateInterview> findInterviewsPerAssociate() {

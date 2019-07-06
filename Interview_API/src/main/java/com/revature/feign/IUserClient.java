@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.revature.cognito.annotations.CognitoAuth;
 import com.revature.cognito.constants.CognitoRoles;
 import com.revature.dtos.EmailList;
+import com.revature.models.StatusHistory;
 import com.revature.models.User;
 
 @FeignClient(name="user-service")
@@ -48,4 +49,7 @@ public interface IUserClient {
 	@CognitoAuth(roles = { "staging-manager" })
 	@PostMapping
 	public User save(@RequestBody User u);
+	
+	@GetMapping("statushistory/email/{email}")
+	public ResponseEntity<List<StatusHistory>> findByUserEmail(@PathVariable String email);
 }

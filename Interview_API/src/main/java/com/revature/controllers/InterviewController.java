@@ -1,6 +1,7 @@
 package com.revature.controllers;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.io.UnsupportedEncodingException;
@@ -35,9 +36,11 @@ import com.revature.dtos.FeedbackData;
 import com.revature.dtos.FeedbackStat;
 import com.revature.dtos.Interview24Hour;
 import com.revature.dtos.InterviewAssociateJobData;
+import com.revature.dtos.InterviewStagingTime;
 import com.revature.models.FeedbackStatus;
 import com.revature.models.Interview;
 import com.revature.models.InterviewFeedback;
+import com.revature.models.StatusHistory;
 import com.revature.dtos.NewInterviewData;
 import com.revature.dtos.NumberOfInterviewsCount;
 import com.revature.dtos.UserDto;
@@ -72,6 +75,11 @@ public class InterviewController {
 	@GetMapping(path = "users/user/email/{email:.+}")
 	public ResponseEntity<com.revature.feign.User> getByEmail(@PathVariable String email){
 		return iUserClient.getByEmail(email);
+	}
+	
+	@GetMapping("statushistory/email/{email:.+}")
+	public ResponseEntity<List<StatusHistory>> getByUserEmail(@PathVariable String email){
+		return iUserClient.findByUserEmail(email);
 	}
 	
 	@GetMapping("/pages")
